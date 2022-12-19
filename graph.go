@@ -88,6 +88,13 @@ type iolet struct {
 	Outlet
 }
 
+// ===== outline =====
+
+type Outline interface {
+	Outlet
+	Commands() <-chan Command
+}
+
 // ===== inline =====
 
 type Inline interface {
@@ -108,6 +115,59 @@ func (in inline) Close() {
 
 func (in inline) Events() <-chan Event {
 	return in.events
+}
+
+// ===== pipe =====
+
+type Pipe interface {
+	Inline
+	Outline
+}
+
+type pipe struct {
+	commands chan Command
+	events   chan Event
+}
+
+func newPipe() Pipe {
+	return &pipe{
+		commands: make(chan Command, 1),
+		events:   make(chan Event, 1),
+	}
+}
+
+func (p *pipe) Commands() <-chan Command {
+	return p.commands
+}
+
+func (p *pipe) Events() <-chan Event {
+	return p.events
+}
+
+func (p *pipe) Close() {
+	// TODO
+	// close(p.commands)
+	// close(p.events)
+}
+
+func (p *pipe) Pull() {
+	p.commands <- PULL
+}
+
+func (p *pipe) Cancel() {
+	p.commands <- CANCEL
+}
+
+func (p *pipe) Push(v any) {
+	p.events <- Event{Data: v}
+}
+
+func (p *pipe) Error(e error) {
+	p.events <- Event{Error: e}
+}
+
+func (p *pipe) Complete() {
+	p.events <- Event{Complete: true}
 }
 
 // ===== emit ======
