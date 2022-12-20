@@ -88,11 +88,12 @@ func (sg SourceGraphFunc) Via(flow FlowBuilder) Graph {
 	})
 }
 
+func (sg SourceGraphFunc) From(source SourceBuilder) Graph {
+	return Merge(sg, source)
+}
+
 func (sg SourceGraphFunc) To(sink SinkBuilder) Graph {
-	return straigtGraph{
-		source: sg,
-		sink:   sink,
-	}
+	return newStraightGraph(sg, sink)
 }
 
 func (sg SourceGraphFunc) Await() error {

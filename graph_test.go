@@ -51,7 +51,7 @@ func TestInletChanAndInline(t *testing.T) {
 }
 
 func TestStraightGraph(t *testing.T) {
-	graph := straigtGraph{ZeroSource(), Empty()}
+	graph := newStraightGraph(ZeroSource(), Empty())
 
 	assert.Panics(t, func() {
 		graph.To(Empty())

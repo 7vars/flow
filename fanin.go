@@ -36,6 +36,11 @@ func (fin *fanIn) Build() Inline {
 	return pipe
 }
 
+func (fin *fanIn) From(source SourceBuilder) Graph {
+	fin.sources = append(fin.sources, source)
+	return fin
+}
+
 func (fin *fanIn) Via(flow FlowBuilder) Graph {
 	return SourceGraphFunc(func() SourceBuilder {
 		return SourceBuilderFunc(func() Inline {
@@ -45,10 +50,7 @@ func (fin *fanIn) Via(flow FlowBuilder) Graph {
 }
 
 func (fin *fanIn) To(sink SinkBuilder) Graph {
-	return straigtGraph{
-		source: fin,
-		sink:   sink,
-	}
+	return newStraightGraph(fin, sink)
 }
 
 func (fin *fanIn) Await() error {

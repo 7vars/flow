@@ -191,44 +191,53 @@ type EmittableInline interface {
 
 type Graph interface {
 	Runnable
+	From(SourceBuilder) Graph
 	Via(FlowBuilder) Graph
 	To(SinkBuilder) Graph
 }
 
-type straigtGraph struct {
+type straightGraph struct {
 	source SourceBuilder
 	sink   SinkBuilder
 }
 
-func (sg straigtGraph) Via(flow FlowBuilder) Graph {
+func newStraightGraph(source SourceBuilder, sink SinkBuilder) Graph {
+	return straightGraph{source: source, sink: sink}
+}
+
+func (sg straightGraph) From(source SourceBuilder) Graph {
+	return Merge(sg.source, source).To(sg.sink)
+}
+
+func (sg straightGraph) Via(flow FlowBuilder) Graph {
 	panic("fanout not implemented") // TODO
 }
 
-func (sg straigtGraph) To(sink SinkBuilder) Graph {
+func (sg straightGraph) To(sink SinkBuilder) Graph {
 	panic("fanout not implemented") // TODO
 }
 
-func (sg straigtGraph) Await() error {
+func (sg straightGraph) Await() error {
 	return sg.AwaitWithContext(context.Background())
 }
 
-func (sg straigtGraph) AwaitWithContext(ctx context.Context) error {
+func (sg straightGraph) AwaitWithContext(ctx context.Context) error {
 	_, err := sg.ExecuteWithContext(ctx)
 	return err
 }
 
-func (sg straigtGraph) Run() <-chan any {
+func (sg straightGraph) Run() <-chan any {
 	return sg.RunWithContext(context.Background())
 }
 
-func (sg straigtGraph) RunWithContext(ctx context.Context) <-chan any {
+func (sg straightGraph) RunWithContext(ctx context.Context) <-chan any {
 	return sg.sink.Build(sg.source.Build()).RunWithContext(ctx)
 }
 
-func (sg straigtGraph) Execute() (any, error) {
+func (sg straightGraph) Execute() (any, error) {
 	return sg.ExecuteWithContext(context.Background())
 }
 
-func (sg straigtGraph) ExecuteWithContext(ctx context.Context) (any, error) {
+func (sg straightGraph) ExecuteWithContext(ctx context.Context) (any, error) {
 	return execute(sg.RunWithContext(ctx))
 }

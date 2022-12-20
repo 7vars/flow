@@ -187,6 +187,14 @@ func (fgf FlowGraphFunc) Build(in Inline) Inline {
 	return fgf().Build(in)
 }
 
+func (fgf FlowGraphFunc) From(source SourceBuilder) Graph {
+	return SourceGraphFunc(func() SourceBuilder {
+		return SourceBuilderFunc(func() Inline {
+			return fgf.Build(source.Build())
+		})
+	})
+}
+
 func (fgf FlowGraphFunc) Via(flow FlowBuilder) FlowGraph {
 	return FlowGraphFunc(func() FlowBuilder {
 		return FlowBuilderFunc(func(in Inline) Inline {
