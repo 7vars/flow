@@ -64,7 +64,10 @@ func (bs BuildSource) Build() Inline {
 		}
 	}(commands, events, bs())
 
-	return inline{InletChan(commands), func() { close(commands) }, events}
+	return inline{InletChan(commands), func() {
+		// fmt.Println("DEBUG: close source commands")
+		close(commands)
+	}, events}
 }
 
 // ===== graph =====
@@ -80,7 +83,7 @@ func (sg SourceGraphFunc) Build() Inline {
 	return sg().Build()
 }
 
-func (sg SourceGraphFunc) Via(flow FlowBuilder) Graph {
+func (sg SourceGraphFunc) Via(flow FlowBuilder) SourceGraph {
 	return SourceGraphFunc(func() SourceBuilder {
 		return SourceBuilderFunc(func() Inline {
 			return flow.Build(sg.Build())

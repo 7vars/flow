@@ -46,7 +46,7 @@ func (fo *fanOut) From(source SourceBuilder) Graph {
 	return newStraightGraph(source, fo)
 }
 
-func (fo *fanOut) Via(flow FlowBuilder) Graph {
+func (fo *fanOut) Via(flow FlowBuilder) SourceGraph {
 	panic("fanout via not supported yet") // TODO
 }
 
@@ -95,6 +95,8 @@ func broadcastWorker(inline Inline, outlines ...Outline) {
 }
 
 func broadcastInlineWorker(pulls <-chan []Outlet, inline Inline) {
+	// defer fmt.Println("DEBUG: broadcast inlineWorker closed")
+	defer inline.Close()
 	defer inline.Cancel()
 	send := func(evt Event, outs ...Outlet) {
 		for _, out := range outs {
@@ -120,6 +122,7 @@ func broadcastInlineWorker(pulls <-chan []Outlet, inline Inline) {
 }
 
 func broadcastOutlineWorker(pulls chan<- []Outlet, outlines ...Outline) {
+	// defer fmt.Println("DEBUG: broadcast outlineWorker closed")
 	defer close(pulls)
 	for {
 		if len(outlines) == 0 {

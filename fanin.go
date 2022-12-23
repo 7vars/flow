@@ -41,7 +41,7 @@ func (fin *fanIn) From(source SourceBuilder) Graph {
 	return fin
 }
 
-func (fin *fanIn) Via(flow FlowBuilder) Graph {
+func (fin *fanIn) Via(flow FlowBuilder) SourceGraph {
 	return SourceGraphFunc(func() SourceBuilder {
 		return SourceBuilderFunc(func() Inline {
 			return flow.Build(fin.Build())
@@ -92,6 +92,11 @@ func Zip(f func([]any) (any, error), sources ...SourceBuilder) Graph {
 
 func joinWorker(f func([]any) (any, error)) FanInWorker {
 	return func(outline Outline, inlines ...Inline) {
+		defer func() {
+			for _, inline := range inlines {
+				inline.Close()
+			}
+		}()
 		for cmd := range outline.Commands() {
 			switch cmd {
 			case PULL:
@@ -165,6 +170,7 @@ func mergeWorker(outline Outline, inlines ...Inline) {
 }
 
 func mergeInlineWorker(wg *sync.WaitGroup, pulls <-chan chan<- Event, inline Inline) {
+	defer inline.Close()
 	defer wg.Done()
 	for pull := range pulls {
 		inline.Pull()

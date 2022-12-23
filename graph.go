@@ -145,9 +145,8 @@ func (p *pipe) Events() <-chan Event {
 }
 
 func (p *pipe) Close() {
-	// TODO
-	// close(p.commands)
-	// close(p.events)
+	close(p.commands)
+	close(p.events)
 }
 
 func (p *pipe) Pull() {
@@ -192,7 +191,7 @@ type EmittableInline interface {
 type Graph interface {
 	Runnable
 	From(SourceBuilder) Graph
-	Via(FlowBuilder) Graph
+	Via(FlowBuilder) SourceGraph
 	To(SinkBuilder) Graph
 }
 
@@ -209,7 +208,7 @@ func (sg straightGraph) From(source SourceBuilder) Graph {
 	return Merge(sg.source, source).To(sg.sink)
 }
 
-func (sg straightGraph) Via(flow FlowBuilder) Graph {
+func (sg straightGraph) Via(flow FlowBuilder) SourceGraph {
 	panic("fanout not implemented") // TODO
 }
 
