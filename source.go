@@ -93,6 +93,9 @@ func (sg SourceGraphFunc) From(source SourceBuilder) Graph {
 }
 
 func (sg SourceGraphFunc) To(sink SinkBuilder) Graph {
+	if fanout, ok := sink.(*fanOut); ok {
+		return fanout.From(sg)
+	}
 	return newStraightGraph(sg, sink)
 }
 

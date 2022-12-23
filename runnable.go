@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -69,6 +70,67 @@ func execute(emits <-chan any) (any, error) {
 	default:
 		return res, nil
 	}
+}
+
+// ===== runnables =====
+
+type Runnables []Runnable
+
+func (r Runnables) Await() error {
+	return r.AwaitWithContext(context.Background())
+}
+
+func (r Runnables) AwaitWithContext(ctx context.Context) error {
+	_, err := r.ExecuteWithContext(ctx)
+	return err
+}
+
+func (r Runnables) Run() <-chan any {
+	return r.RunWithContext(context.Background())
+}
+
+func (r Runnables) RunWithContext(ctx context.Context) <-chan any {
+	result := make(chan any, 1)
+	var wg sync.WaitGroup
+	wg.Add(len(r))
+	results := make(chan any, len(r))
+
+	for _, run := range r {
+		go func(wg *sync.WaitGroup, r Runnable) {
+			defer wg.Done()
+			results <- r.Await()
+		}(&wg, run)
+	}
+
+	go func(){
+		defer close(result)
+		var err error
+		for v := range results {
+			if e, ok := v.(error); ok {
+				if err == nil {
+					err = e
+					continue
+				}
+				err = fmt.Errorf("%w caused by %w", err, e)
+			}
+		}
+		result <- err
+	}()
+
+	go func() {
+		wg.Wait()
+		defer close(results)
+	}()
+
+	return result
+}
+
+func (r Runnables) Execute() (any, error) {
+	return r.ExecuteWithContext(context.Background())
+}
+
+func (r Runnables) ExecuteWithContext(ctx context.Context) (any, error) {
+	return execute(r.RunWithContext(ctx))
 }
 
 // ===== emitter =====
