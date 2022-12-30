@@ -8,7 +8,7 @@ GOTOOL=$(GOCMD) tool
 
 .PHONY: test
 test: tidy
-	$(GOTEST) -coverprofile cover.out -v ./...
+	$(GOTEST) -timeout 30s -coverprofile cover.out -v ./...
 
 .PHONY: tidy
 tidy:
